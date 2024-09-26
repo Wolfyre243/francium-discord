@@ -1,12 +1,17 @@
 //------------------------------Declare Variables------------------------------------
 const fs = require('node:fs'); // Node's native file system module.
 const path = require('node:path'); // Node's native path utility module.
-const { Client, Collection, GatewayIntentBits } = require('discord.js');
+const { Client, Collection, GatewayIntentBits, IntentsBitField } = require('discord.js');
 const { token } = require('./config.json');
 
-
 // Create a new Discord client
-const client = new Client({ intents: [GatewayIntentBits.Guilds] });
+const client = new Client({ 
+    intents: [
+        GatewayIntentBits.Guilds,
+        GatewayIntentBits.GuildMessages,
+        GatewayIntentBits.MessageContent
+    ],
+});
 
 //---------------------------------Main Script----------------------------------------
 // Adds a new property called "commands" to the client instance
@@ -32,7 +37,7 @@ for (const folder of commandFolders) {
             console.log(`[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`);
         }
     }
-}
+};
 
 // 2. Initiate and Fire the Event files
 const eventsPath = path.join(__dirname, 'events');
@@ -48,7 +53,7 @@ for (const file of eventFiles) {
         client.on(event.name, (...args) => event.execute(...args));
         // e.g. client.on(Events.InteractionCreate, async interaction => {...}); where interaction is ...args
     }
-}
+};
 
 
 // Log in to Discord with your client's token
