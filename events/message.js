@@ -1,5 +1,6 @@
 const { Events } = require('discord.js');
-const { formatPrevMessages } = require('../lib/formatPrevMsgs')
+const { formatPrevMessages } = require('../lib/formatPrevMsgs');
+const { endpoint } = require('../config.json');
 
 // 1242754476914249779
 module.exports = {
@@ -26,7 +27,7 @@ module.exports = {
         if (message.author.username == "wolfyre.") {
             try {
                 await message.channel.sendTyping();
-                const response = await fetch('http://host.docker.internal:3030/francium', {
+                const response = await fetch(`http://${endpoint}:3030/francium`, {
                     method: 'POST',
                     body: JSON.stringify({
                         message: message.content
