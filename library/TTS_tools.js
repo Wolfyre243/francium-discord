@@ -1,8 +1,8 @@
 // This file connects a new player to the voice channel that the bot is currently in.
 // Only connect if the user who sent the message is in the specific vc.
 
-const { joinVoiceChannel, createAudioPlayer, AudioPlayerStatus, VoiceConnectionStatus, createAudioResource } = require('@discordjs/voice');
-const { endpoint, guildId } = require('../config.json');
+const { createAudioResource } = require('@discordjs/voice');
+const { endpoint } = require('../config.json');
 
 const fs = require('fs');
 const path = require('path');

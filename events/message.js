@@ -1,7 +1,6 @@
 const { Events } = require('discord.js');
-const { formatPrevMessages } = require('../library/formatPrevMsgs');
-const { endpoint, guildId, voiceChannelId } = require('../config.json');
-const { joinVoiceChannel, createAudioPlayer, AudioPlayerStatus, VoiceConnectionStatus, createAudioResource } = require('@discordjs/voice');
+const { endpoint, guildId } = require('../config.json');
+const { joinVoiceChannel, createAudioPlayer, AudioPlayerStatus, VoiceConnectionStatus } = require('@discordjs/voice');
 const { generateAudioResource } = require('../library/TTS_tools');
 
 // 1242754476914249779
@@ -49,15 +48,18 @@ module.exports = {
                 
                 // Unsubscribe a few seconds after the player becomes idle.
                 // After that, destroy the connection.
-                // audioPlayer.on('stateChange', (oldState, newState) => {
-                //     console.log(`State changed from ${oldState} to ${newState}!`);
-                //     // console.log('Finished playing audio!');
-                //     // setTimeout(() => {
-                //     //     subscription.unsubscribe();
-                //     //     voiceConnection.destroy();
-                //     //     player.stop();
-                //     // }, 3000);
-                // });
+                audioPlayer.on('stateChange', (oldState, newState) => {
+                    console.log(`State changed from ${oldState.status} to ${newState.status}!`);
+                    if (oldState.status == "playing" && newState.status == "idle") {
+                        console.log('Finished playing audio!');
+                        setTimeout(() => {
+                            subscription.unsubscribe();
+                            voiceConnection.destroy();
+                            audioPlayer.stop();
+                        }, 3000);
+                    }
+                    
+                });
             
                 audioPlayer.on('error', (e) => {
                     console.log(`Error: ${e}`);
@@ -87,14 +89,12 @@ module.exports = {
                 // When ready, subscribe to the audio player.
                 voiceConnection.on(VoiceConnectionStatus.Ready, () => {
                     console.log("Voice Connection Established!");
-                    voiceConnection.subscribe(audioPlayer);
+                    subscription = voiceConnection.subscribe(audioPlayer);
                 });
 
                 // Generate audio
                 const audioResource = await generateAudioResource(responseJSON.result);
                 audioPlayer.play(audioResource);
-
-                
 
             } catch (error) {
                 await message.reply("There was an error with my brain...");
