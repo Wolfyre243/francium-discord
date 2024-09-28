@@ -2,11 +2,10 @@
 const { SlashCommandBuilder } = require('discord.js');
 const { endpoint } = require('../../config.json');
 
-const { joinVoiceChannel, getVoiceConnections, createAudioPlayer, AudioPlayerStatus, createAudioResource, generateDependencyReport, VoiceConnectionStatus } = require('@discordjs/voice');
+const { getVoiceConnections, createAudioPlayer, AudioPlayerStatus, createAudioResource, generateDependencyReport, VoiceConnectionStatus } = require('@discordjs/voice');
 
 const fs = require('fs');
 const path = require('path');
-const ffmpeg = require('ffmpeg-static');
 
 console.log(generateDependencyReport());
 
@@ -26,7 +25,7 @@ module.exports = {
             headers: {
                 "Content-Type": "application/json"
             }
-        })
+        });
         // Parse audio base64 string into a wav file
         const outputJSON = await output.json();
         fs.writeFileSync(path.join(__dirname, '../../audio/output.mp3'), Buffer.from(outputJSON.base64String, 'base64'));
@@ -37,38 +36,37 @@ module.exports = {
         if (!voice.channelId) {
             await interaction.reply(`You must be in a voice channel to use this command.`);
             return;
-        } else if (getVoiceConnections().size > 0) {
-            await interaction.reply(`There is already a voice connection in this server.`);
-            return;
         }
-        // Set up an audio player
-        const player = createAudioPlayer();
-        player.on(AudioPlayerStatus.Playing, () => {
-            console.log("Playing audio!");
-        });
 
-        player.on('error', (e) => {
-            console.log(`Error: ${e}`);
-        })
+        console.log(getVoiceConnections());
+        // // Set up an audio player
+        // const player = createAudioPlayer();
+        // player.on(AudioPlayerStatus.Playing, () => {
+        //     console.log("Playing audio!");
+        // });
 
-        // Join the specified voice channel
-        const voiceConnection = joinVoiceChannel({
-            channelId: voice.channelId,
-            guildId: interaction.guildId,
-            adapterCreator: interaction.guild.voiceAdapterCreator
-        })
+        // player.on('error', (e) => {
+        //     console.log(`Error: ${e}`);
+        // })
 
-        voiceConnection.on(VoiceConnectionStatus.Ready, () => {
-            console.log(`Voice connection established!`);
-            interaction.reply("Successfully connected to voice channel!");
+        // // Join the specified voice channel
+        // const voiceConnection = joinVoiceChannel({
+        //     channelId: voice.channelId,
+        //     guildId: interaction.guildId,
+        //     adapterCreator: interaction.guild.voiceAdapterCreator
+        // })
 
-            const audioResource = createAudioResource(path.join(__dirname, '../../audio/output.mp3')); // <- error here
-            player.play(audioResource);
-            console.log("Audio created successfully");
+        // voiceConnection.on(VoiceConnectionStatus.Ready, () => {
+        //     console.log(`Voice connection established!`);
+        //     interaction.reply("Successfully connected to voice channel!");
 
-            const voiceSubscription = voiceConnection.subscribe(player);
-            console.log("Subscribed successfully");
-        })
+        //     const audioResource = createAudioResource(path.join(__dirname, '../../audio/output.mp3')); // <- error here
+        //     player.play(audioResource);
+        //     console.log("Audio created successfully");
+
+        //     const voiceSubscription = voiceConnection.subscribe(player);
+        //     console.log("Subscribed successfully");
+        // })
 
         
         
