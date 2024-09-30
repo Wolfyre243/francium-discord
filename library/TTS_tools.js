@@ -1,11 +1,38 @@
 // This file connects a new player to the voice channel that the bot is currently in.
 // Only connect if the user who sent the message is in the specific vc.
 
-const { createAudioResource } = require('@discordjs/voice');
+const { createAudioResource, createAudioPlayer, AudioPlayerStatus } = require('@discordjs/voice');
 const { endpoint } = require('../config.json');
 
 const fs = require('fs');
 const path = require('path');
+
+const audioPlayer = createAudioPlayer();
+console.log("Audio player created!");
+
+audioPlayer.on(AudioPlayerStatus.Playing, () => {
+    console.log('Playing audio!');
+});
+
+audioPlayer.on('error', (e) => {
+    console.log(`Error: ${e}`);
+});
+
+// Unsubscribe a few seconds after the player becomes idle.
+// After that, destroy the connection.
+// audioPlayer.on('stateChange', (oldState, newState) => {
+//     console.log(`State changed from ${oldState.status} to ${newState.status}!`);
+//     if (oldState.status == "playing" && newState.status == "idle") {
+//         console.log('Finished playing audio!');
+//         setTimeout(() => {
+//             subscription.unsubscribe();
+//             voiceConnection.destroy();
+//             audioPlayer.stop();
+//         }, 3000);
+//     }
+    
+// });
+
 
 const generateAudioResource = async (message) => {
     // Use the francium server to generate Buffer
@@ -36,4 +63,4 @@ const generateAudioResource = async (message) => {
     
 }
 
-module.exports = { generateAudioResource };
+module.exports = { generateAudioResource, audioPlayer };
