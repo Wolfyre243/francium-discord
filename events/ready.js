@@ -45,14 +45,15 @@ module.exports = {
 
 		// Set up voice recorder / detector
 		// TODO: Find a better way to decode this someday...
-		// await entersState(voiceConnection, VoiceConnectionStatus.Ready, 20e3);
-		// const receiver = voiceConnection.receiver;
+		await entersState(voiceConnection, VoiceConnectionStatus.Ready, 20e3);
+		const receiver = voiceConnection.receiver;
 
-		// // Set event listeners
-		// receiver.speaking.on("start", (userId) => {
-		// 	console.log(`User ${userId} started speaking!`);
-		// 	if (userId !== sudoId) return;
-		// 	createListeningStream(receiver, userId);
-		// });
+		// Set event listeners
+		receiver.speaking.on("start", (userId) => {
+			console.log(`User ${userId} started speaking!`);
+			if (userId !== sudoId) return;
+			createListeningStream(receiver, userId);
+		});
+
 	},
 };

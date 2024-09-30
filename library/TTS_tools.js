@@ -11,6 +11,7 @@ const { endpoint } = require('../config.json');
 
 const fs = require('fs');
 const path = require('path');
+const { v4 } = require('uuid');
 
 const audioPlayer = createAudioPlayer();
 console.log("Audio player created!");
@@ -52,58 +53,44 @@ const generateAudioResource = async (message) => {
 }
 
 const createListeningStream = async (receiver, userId) => {
-    // const writeStream = fs.createWriteStream(path.join(__dirname, '../audio/recording.pcm'));
     const listenStream = receiver.subscribe(userId, {
         end: {
-            behaviour: EndBehaviorType.AfterSilence,
+            behavior: EndBehaviorType.AfterSilence,
             duration: 100,
         }
     });
 
-    const encoder = new OpusScript(48000, 2, OpusScript.Application.AUDIO);
+    const uid = v4();
+    const writeStream = fs.createWriteStream(path.join(__dirname, `../audio/${uid}.pcm`), { flags: 'a' });
 
-
-    const writeStream = fs.createWriteStream(path.join(__dirname, '../audio/recording.pcm'), { flags: 'a' });
-
-    listenStream.on('data', (chunk) => {
-        console.log("received data");
-    });
-
-    // pipeline(listenStream, opusDecoder, writeStream, (err) => {
-    //     if (err) {
-    //         console.log("Error writing file: ", err.message);
-    //     } else {
-    //         console.log("wrote pcm file");
-    //     }
-    // })
+    // listenStream.on('data', (chunk) => {
+    //     console.log("received data");
+    // });
 
     listenStream
         .pipe(new prism.opus.Decoder({
             rate: 48000,
             channels: 2,
-            frameSize: 960,
+            frameSize: 960
         }))
         .pipe(writeStream);
 
-    // subscription.on('end', () => {
-    //     console.log("attempting to write file...");
-    //     fs.writeFileSync(path.join(__dirname, '../audio/recording.mp3'), Buffer.from(buffer));
-    // });
-
-    receiver.speaking.on('end', () => {
+    listenStream.on('end', () => {
         console.log("attempting to write mp3 file...");
         // const realbuffer = fs.readFileSync(path.join(__dirname, '../audio/recording.pcm')).toString('base64');
         // fs.writeFileSync(path.join(__dirname, '../audio/recording.mp3'), Buffer.from(realbuffer, 'base64'));
         setTimeout(() => {
             ffmpeg()
-                .input(path.join(__dirname, '../audio/recording.pcm'))
-                .inputFormat('s16le')
+                .input(path.join(__dirname, `../audio/${uid}.pcm`))
+                .inputFormat('s32le')
                 .audioBitrate(128)
                 .audioFrequency(48000)
                 .audioChannels(2)
                 .output(path.join(__dirname, '../audio/recording.mp3'))
                 .on('end', async () => {
                     console.log("file written!");
+                    fs.unlinkSync(path.join(__dirname, `../audio/${uid}.pcm`));
+                    console.log("deleted pcm file");
                 })
                 .on("error", (err) => {
                     console.error("Error:", err);
@@ -111,10 +98,6 @@ const createListeningStream = async (receiver, userId) => {
                 .run();
         }, 3000);
 
-        // const isthisabuffer = fs.readFileSync(path.join(__dirname, '../audio/recording.pcm'));
-        // console.log(isthisabuffer);
-
-        // fs.writeFileSync(path.join(__dirname, '../audio/recording.mp3'), isthisabuffer)
         console.log("wrote file");
     });
 }
