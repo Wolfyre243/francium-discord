@@ -11,9 +11,6 @@ const { endpoint } = require('../config.json');
 
 const fs = require('fs');
 const path = require('path');
-const { channel } = require('diagnostics_channel');
-const { BaseGuild } = require('discord.js');
-const { error } = require('console');
 
 const audioPlayer = createAudioPlayer();
 console.log("Audio player created!");
@@ -25,22 +22,6 @@ audioPlayer.on(AudioPlayerStatus.Playing, () => {
 audioPlayer.on('error', (e) => {
     console.log(`Error: ${e}`);
 });
-
-// Unsubscribe a few seconds after the player becomes idle.
-// After that, destroy the connection.
-// audioPlayer.on('stateChange', (oldState, newState) => {
-//     console.log(`State changed from ${oldState.status} to ${newState.status}!`);
-//     if (oldState.status == "playing" && newState.status == "idle") {
-//         console.log('Finished playing audio!');
-//         setTimeout(() => {
-//             subscription.unsubscribe();
-//             voiceConnection.destroy();
-//             audioPlayer.stop();
-//         }, 3000);
-//     }
-    
-// });
-
 
 const generateAudioResource = async (message) => {
     // Use the francium server to generate Buffer
