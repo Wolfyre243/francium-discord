@@ -93,7 +93,7 @@ export const generateAudioResource = async (message) => {
 }
 
 export const transcribeAudio = async (filepath) => {
-    const transcriber = await pipeline('automatic-speech-recognition', 'Xenova/whisper-tiny.en');
+    const transcriber = await pipeline('automatic-speech-recognition', 'distil-whisper/distil-large-v3');
     const recording = new wavefile.WaveFile(fs.readFileSync(filepath));
     recording.toBitDepth('32f');
     recording.toSampleRate(16000);
@@ -137,8 +137,7 @@ export const createListeningStream = async (receiver, userId) => {
         ffmpeg()
             .input(path.join(__dirname, `../audio/${uid}.pcm`))
             .inputFormat('s32le')
-            .audioBitrate(128)
-            .audioFrequency(48000)
+            .audioFrequency(60000)
             .audioChannels(2)
             .output(path.join(__dirname, '../audio/recording.wav'))
             .on('end', async () => {
