@@ -46,6 +46,7 @@ import fs from 'fs';
 import path from 'path';
 import { v4 } from 'uuid';
 import config from '../config.json' with { type: "json" };
+import { generateResponse } from './ollamaTools.js';
 
 const endpoint = config.endpoint;
 const __dirname = import.meta.dirname;
@@ -106,6 +107,11 @@ export const transcribeAudio = async (filepath) => {
     return output.text;
 }
 
+export const speakAudio = async (message) => {
+    const audioResource = await generateAudioResource(message);
+    audioPlayer.play(audioResource);
+}
+
 export const createListeningStream = async (receiver, userId) => {
     // Create a listening stream upon subscription to specified user.
     const listenStream = receiver.subscribe(userId, {
@@ -154,6 +160,11 @@ export const createListeningStream = async (receiver, userId) => {
         // After generation, transcribe the audio and return the transcribed message.
         const userMessage = await transcribeAudio(path.join(__dirname, `../audio/recording.wav`));
         console.log(`Transcribed Message: ${userMessage}`);
+
+        const response = await generateResponse(userMessage);
+        console.log(`Generated Response: ${response.result}`);
+        speakAudio(response.result);
+
     });
 }
 

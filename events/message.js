@@ -1,6 +1,7 @@
 import { Events } from 'discord.js';
 import config from '../config.json' with { type: "json" };
-import { generateAudioResource, audioPlayer } from '../library/TTS_tools.js';
+import { generateAudioResource, audioPlayer, speakAudio } from '../library/TTS_tools.js';
+import { generateResponse } from '../library/ollamaTools.js';
 
 const endpoint = config.endpoint;
 
@@ -15,33 +16,25 @@ export const event = {
         if (message.author.username == "wolfyre.") {
             try {
                 await message.channel.sendTyping();
-                const response = await fetch(`http://${endpoint}:3030/francium`, {
-                    method: 'POST',
-                    body: JSON.stringify({
-                        message: message.content
-                    }),
-                    headers: {
-                        "Content-Type": "application/json"
-                    }
-                });
+                const response = await generateResponse(message.content);
                 
                 // Handle error status code
-                if (response.statusCode == 500) {
-                    console.log("Error in API request:", response.error);
-                    message.reply("Uh oh, my brain's not working! (Psst! Error code 500!)");
-                    return;
-                }
-                
-                const responseJSON = await response.json();
-                message.reply(responseJSON.result);
+                // if (response.statusCode == 500) {
+                //     console.log("Error in API request:", response.error);
+                //     message.reply("Uh oh, my brain's not working! (Psst! Error code 500!)");
+                //     return;
+                // }
+
+                message.reply(response.result);
 
                 if (!(message.member.voice.channelId)) {
                     console.log("User is not in a voice channel.")
                     return;
                 }
                 
-                const audioResource = await generateAudioResource(responseJSON.result);
-                audioPlayer.play(audioResource);
+                // const audioResource = await generateAudioResource(responseJSON.result);
+                // audioPlayer.play(audioResource);
+                speakAudio(response.result);
 
             } catch (error) {
                 await message.reply("There was an error with my brain...");
