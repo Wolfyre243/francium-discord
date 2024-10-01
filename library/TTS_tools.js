@@ -50,7 +50,9 @@ import { generateResponse } from './ollamaTools.js';
 
 const endpoint = config.endpoint;
 const __dirname = import.meta.dirname;
-console.log(__dirname)
+
+// A debounce to prevent queuing of audio
+let canPlay = true;
 
 // -------------------------------------- Main Script ---------------------------------------------------------
 // Initialise audio player
@@ -59,6 +61,10 @@ console.log("Audio player created!");
 
 audioPlayer.on(AudioPlayerStatus.Playing, () => {
     console.log('Playing audio!');
+});
+
+audioPlayer.on(AudioPlayerStatus.Idle, () => {
+    canPlay = true;
 });
 
 audioPlayer.on('error', (e) => {
@@ -113,6 +119,12 @@ export const speakAudio = async (message) => {
 }
 
 export const createListeningStream = async (receiver, userId) => {
+    if (!canPlay) {
+        console.log("Audio player is busy.");
+        return;
+    }
+
+    canPlay = false;
     // Create a listening stream upon subscription to specified user.
     const listenStream = receiver.subscribe(userId, {
         end: {
@@ -145,7 +157,7 @@ export const createListeningStream = async (receiver, userId) => {
             .inputFormat('s32le')
             .audioFrequency(60000)
             .audioChannels(2)
-            .output(path.join(__dirname, '../audio/recording.wav'))
+            .output(path.join(__dirname, `../audio/${uid}.wav`))
             .on('end', async () => {
                 console.log("file written!");
                 fs.unlinkSync(path.join(__dirname, `../audio/${uid}.pcm`));
@@ -157,8 +169,9 @@ export const createListeningStream = async (receiver, userId) => {
             .run();
 
         console.log('created mp3 file');
+        
         // After generation, transcribe the audio and return the transcribed message.
-        const userMessage = await transcribeAudio(path.join(__dirname, `../audio/recording.wav`));
+        const userMessage = await transcribeAudio(path.join(__dirname, `../audio/${uid}.wav`));
         console.log(`Transcribed Message: ${userMessage}`);
 
         if (!userMessage) return;
@@ -166,7 +179,7 @@ export const createListeningStream = async (receiver, userId) => {
         const response = await generateResponse(userMessage);
         console.log(`Generated Response: ${response.result}`);
         speakAudio(response.result);
-
+        
     });
 }
 

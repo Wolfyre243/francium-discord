@@ -2,7 +2,8 @@ import { Events } from 'discord.js';
 import {
   joinVoiceChannel,
   VoiceConnectionStatus,
-  entersState
+  entersState,
+  AudioPlayerStatus
 } from '@discordjs/voice';
 import { 
   audioPlayer, 
@@ -62,7 +63,10 @@ export const event = {
 		// Set event listeners
 		receiver.speaking.on("start", (userId) => {
 			console.log(`User ${userId} started speaking!`);
+			// Only allow authorised user to speak to the bot.
 			if (userId !== sudoId) return;
+			// // If audio is already playing or buffering, do not invoke anything.
+			// if (audioPlayer.state == AudioPlayerStatus.Playing || audioPlayer.state == AudioPlayerStatus.Buffering) return;
 			createListeningStream(receiver, userId);
 		});
 
