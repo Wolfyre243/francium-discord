@@ -1,9 +1,20 @@
-const { Events } = require('discord.js');
-const { joinVoiceChannel, VoiceConnectionStatus, entersState } = require('@discordjs/voice');
-const { audioPlayer, createListeningStream } = require('../library/TTS_tools');
-const { guildId, sudoId } = require('../config.json');
+import { Events } from 'discord.js';
+import {
+  joinVoiceChannel,
+  VoiceConnectionStatus,
+  entersState
+} from '@discordjs/voice';
+import { 
+  audioPlayer, 
+  createListeningStream 
+} from '../library/TTS_tools.js';
+import config from '../config.json' with { type: "json" };
 
-module.exports = {
+const guildId = config.guildId;
+const sudoId = config.sudoId;
+
+
+export const event = {
 	name: Events.ClientReady,
 	once: true,
     // When the client is ready, run this code (only once).

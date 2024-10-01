@@ -1,8 +1,8 @@
-function formatMessage(role, message) {
+export function formatMessage(role, message) {
     return `${role}: ${message}`;
 }
 
-function formatPrevMessages(messageArr) {
+export function formatPrevMessages(messageArr) {
     let formattedArr = [];
     messageArr.forEach((message) => {
         console.log(message.author.username)
@@ -15,5 +15,3 @@ function formatPrevMessages(messageArr) {
     });
     return formattedArr.join('\n');
 }
-
-module.exports = { formatPrevMessages, formatMessage };

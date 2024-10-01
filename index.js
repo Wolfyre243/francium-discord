@@ -1,8 +1,12 @@
 //------------------------------Declare Variables------------------------------------
-const fs = require('node:fs'); // Node's native file system module.
-const path = require('node:path'); // Node's native path utility module.
-const { Client, Collection, GatewayIntentBits, IntentsBitField } = require('discord.js');
-const { token } = require('./config.json');
+import fs from 'node:fs'; // Node's native file system module.
+import path from 'node:path'; // Node's native path utility module.
+import { Client, Collection, GatewayIntentBits, IntentsBitField } from 'discord.js';
+import config from './config.json' with { type: "json" };
+
+const token = config.token;
+
+const __dirname = import.meta.dirname;
 
 // Create a new Discord client
 const client = new Client({ 
@@ -28,8 +32,8 @@ for (const folder of commandFolders) {
     const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js')); // Reads the path to the directory and returns an array of files.
 
     for (const file of commandFiles) {
-        const filePath = path.join(commandsPath, file);
-        const command = require(filePath); // Require the command file and store it in the command variable
+        const filePath = `./commands/${folder}/${file}`;
+        const { command } = await import(filePath); // Require the command file and store it in the command variable
 
         // Set a new item in the Collection
         if ('data' in command && 'execute' in command) { // Check if the command was written properly
@@ -45,8 +49,8 @@ const eventsPath = path.join(__dirname, 'events');
 const eventFiles = fs.readdirSync(eventsPath).filter(file => file.endsWith('.js'));
 
 for (const file of eventFiles) {
-    const filePath = path.join(eventsPath, file);
-    const event = require(filePath); // Require the event file and store it in the event variable
+    const filePath = `./events/${file}`;
+    const { event } = await import(filePath); // Require the event file and store it in the event variable
 
     if (event.once) {
         client.once(event.name, (...args) => event.execute(...args));

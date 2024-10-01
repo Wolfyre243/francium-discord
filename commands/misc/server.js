@@ -1,6 +1,6 @@
-const { SlashCommandBuilder } = require('discord.js');
+import { SlashCommandBuilder } from 'discord.js';
 
-module.exports = {
+export const command = {
     category: 'misc',
     data: new SlashCommandBuilder()
             .setName('server') // /ping

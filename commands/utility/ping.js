@@ -1,6 +1,6 @@
-const { SlashCommandBuilder } = require('discord.js');
+import { SlashCommandBuilder } from 'discord.js';
 
-module.exports = {
+export const command = {
     category: 'utility', // This should match the category name
     data: new SlashCommandBuilder()
             .setName('ping') // /ping
