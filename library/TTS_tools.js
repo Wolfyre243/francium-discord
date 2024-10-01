@@ -73,6 +73,8 @@ audioPlayer.on('error', (e) => {
 
 export const generateAudioResource = async (message) => {
     // Use the francium server to generate Buffer
+    const uid = v4();
+
     try {
         const output = await fetch(`http://${endpoint}:3030/texttospeech`, {
             method: "POST",
@@ -86,11 +88,11 @@ export const generateAudioResource = async (message) => {
     
         // Parse response and create an mp3 file
         const outputJSON = await output.json();
-        fs.writeFileSync(path.join(__dirname, '../audio/output.mp3'), Buffer.from(outputJSON.base64String, 'base64'));
+        fs.writeFileSync(path.join(__dirname, `../audio/output_${uid}.mp3`), Buffer.from(outputJSON.base64String, 'base64'));
         console.log("file written!");
     
         // Read the created mp3 file and generate an audio resource for the player to play.
-        const audioResource = createAudioResource(path.join(__dirname, '../audio/output.mp3'));
+        const audioResource = createAudioResource(path.join(__dirname, `../audio/output_${uid}.mp3`));
         console.log("Audio created successfully");
     
         return audioResource;
@@ -118,9 +120,12 @@ export const speakAudio = async (message) => {
     audioPlayer.play(audioResource);
 }
 
-export const createListeningStream = async (receiver, userId) => {
+export const createListeningStream = async (receiver, userId, client) => {
+    const logChannel = client.channels.resolve(config.logChannelId);
+
     if (!canPlay) {
         console.log("Audio player is busy.");
+        await logChannel.send(`I'm already playing audio!`);
         return;
     }
 
@@ -174,12 +179,11 @@ export const createListeningStream = async (receiver, userId) => {
         const userMessage = await transcribeAudio(path.join(__dirname, `../audio/${uid}.wav`));
         console.log(`Transcribed Message: ${userMessage}`);
 
-        if (!userMessage) return;
-
         const response = await generateResponse(userMessage);
         console.log(`Generated Response: ${response.result}`);
         speakAudio(response.result);
-        
+
+        logChannel.send(response.result);
     });
 }
 

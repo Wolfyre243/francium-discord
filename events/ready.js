@@ -14,7 +14,6 @@ import config from '../config.json' with { type: "json" };
 const guildId = config.guildId;
 const sudoId = config.sudoId;
 
-
 export const event = {
 	name: Events.ClientReady,
 	once: true,
@@ -22,7 +21,6 @@ export const event = {
     // The name of this function shouldn't matter
 	async execute(client) {
 		console.log(`Ready! Logged in as ${client.user.tag}.`);
-
 		// When the bot is ready, join its dedicated voice channel.
 		// This might change in the future.
 		// We will be creating a SINGLE voice connection
@@ -61,13 +59,13 @@ export const event = {
 		const receiver = voiceConnection.receiver;
 
 		// Set event listeners
-		receiver.speaking.on("start", (userId) => {
+		receiver.speaking.on("start", async (userId) => {
 			console.log(`User ${userId} started speaking!`);
 			// Only allow authorised user to speak to the bot.
 			if (userId !== sudoId) return;
 			// // If audio is already playing or buffering, do not invoke anything.
 			// if (audioPlayer.state == AudioPlayerStatus.Playing || audioPlayer.state == AudioPlayerStatus.Buffering) return;
-			createListeningStream(receiver, userId);
+			createListeningStream(receiver, userId, client);
 		});
 
 	},
