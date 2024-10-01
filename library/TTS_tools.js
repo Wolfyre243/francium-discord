@@ -1,18 +1,26 @@
 // This file connects a new player to the voice channel that the bot is currently in.
 // Only connect if the user who sent the message is in the specific vc.
 
+// Import a TON of dependencies
 const { createAudioResource, createAudioPlayer, AudioPlayerStatus, EndBehaviorType } = require('@discordjs/voice');
+// Import encoder/decoder
 const prism = require('prism-media');
-const OpusScript = require('opusscript');
+// Import ffmpeg tooling
 const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
 const ffmpeg = require('fluent-ffmpeg');
 ffmpeg.setFfmpegPath(ffmpegPath);
-const { endpoint } = require('../config.json');
 
+// Import langchain pipelines
+import { pipeline } from '@xenova/transformers'
+
+// Miscellaneous
 const fs = require('fs');
 const path = require('path');
 const { v4 } = require('uuid');
+const { endpoint } = require('../config.json');
 
+// -------------------------------------- Main Script ---------------------------------------------------------
+// Initialise audio player
 const audioPlayer = createAudioPlayer();
 console.log("Audio player created!");
 
@@ -52,7 +60,15 @@ const generateAudioResource = async (message) => {
     }   
 }
 
+const transcribeAudio = async (filepath) => {
+    const transcriber = await pipeline('automatic-speech-recognition', 'Xenova/whisper-tiny.en');
+    const output = await transcriber(url);
+
+    return output.text;
+}
+
 const createListeningStream = async (receiver, userId) => {
+    // Create a listening stream upon subscription to specified user.
     const listenStream = receiver.subscribe(userId, {
         end: {
             behavior: EndBehaviorType.AfterSilence,
@@ -60,13 +76,12 @@ const createListeningStream = async (receiver, userId) => {
         }
     });
 
+    // Generate a uid for the audio file.
     const uid = v4();
+    // Create a stream that writes a new pcm file with the generated uid
     const writeStream = fs.createWriteStream(path.join(__dirname, `../audio/${uid}.pcm`), { flags: 'a' });
 
-    // listenStream.on('data', (chunk) => {
-    //     console.log("received data");
-    // });
-
+    // Create the pipeline
     listenStream
         .pipe(new prism.opus.Decoder({
             rate: 48000,
@@ -75,10 +90,10 @@ const createListeningStream = async (receiver, userId) => {
         }))
         .pipe(writeStream);
 
-    listenStream.on('end', () => {
+    // When user stops talking, stop the stream and generate an mp3 file.
+    listenStream.on('end', async () => {
         console.log("attempting to write mp3 file...");
-        // const realbuffer = fs.readFileSync(path.join(__dirname, '../audio/recording.pcm')).toString('base64');
-        // fs.writeFileSync(path.join(__dirname, '../audio/recording.mp3'), Buffer.from(realbuffer, 'base64'));
+        
         setTimeout(() => {
             ffmpeg()
                 .input(path.join(__dirname, `../audio/${uid}.pcm`))
@@ -98,8 +113,12 @@ const createListeningStream = async (receiver, userId) => {
                 .run();
         }, 3000);
 
+        // After generation, transcribe the audio and return the transcribed message.
+        const userMessage = await transcribeAudio(path.join(__dirname, `../audio/recording.mp3`));
+        console.log(`Transcribed Message: ${userMessage}`);
+
         console.log("wrote file");
     });
 }
 
-module.exports = { generateAudioResource, audioPlayer, createListeningStream };
+module.exports = { generateAudioResource, audioPlayer, createListeningStream, transcribeAudio };
