@@ -30,8 +30,9 @@ import {
 import prism from 'prism-media';
 
 // Import ffmpeg tooling
-import ffmpegPath from '@ffmpeg-installer/ffmpeg';
+// import ffmpegPath from '@ffmpeg-installer/ffmpeg';
 import ffmpeg from 'fluent-ffmpeg';
+import ffmpegPath from 'ffmpeg-static';
 ffmpeg.setFfmpegPath(ffmpegPath);
 
 // Import langchain pipelines
@@ -44,6 +45,8 @@ import { v4 } from 'uuid';
 import config from '../config.json' with { type: "json" };
 
 const endpoint = config.endpoint;
+const __dirname = import.meta.dirname;
+console.log(__dirname)
 
 // -------------------------------------- Main Script ---------------------------------------------------------
 // Initialise audio player
@@ -88,7 +91,7 @@ export const generateAudioResource = async (message) => {
 
 export const transcribeAudio = async (filepath) => {
     const transcriber = await pipeline('automatic-speech-recognition', 'Xenova/whisper-tiny.en');
-    const output = await transcriber(url);
+    const output = await transcriber(filepath);
 
     return output.text;
 }
@@ -119,7 +122,8 @@ export const createListeningStream = async (receiver, userId) => {
     // When user stops talking, stop the stream and generate an mp3 file.
     listenStream.on('end', async () => {
         console.log("attempting to write mp3 file...");
-        
+        // const pcmObj = fs.readFileSync(path.join(__dirname, `../audio/${uid}.pcm`));
+        // console.log(pcmObj)
         setTimeout(() => {
             ffmpeg()
                 .input(path.join(__dirname, `../audio/${uid}.pcm`))
@@ -139,11 +143,10 @@ export const createListeningStream = async (receiver, userId) => {
                 .run();
         }, 3000);
 
+        console.log('created mp3 file');
         // After generation, transcribe the audio and return the transcribed message.
         const userMessage = await transcribeAudio(path.join(__dirname, `../audio/recording.mp3`));
         console.log(`Transcribed Message: ${userMessage}`);
-
-        console.log("wrote file");
     });
 }
 
