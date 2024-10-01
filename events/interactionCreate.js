@@ -1,8 +1,8 @@
 // This event fires when a user runs a command from the bot.
 
-const { Events } = require('discord.js');
+import { Events } from 'discord.js';
 
-module.exports = {
+export const event = {
     // Create an event listener for when a command is executed
     // The interactionCreate event fires the execute function and passes in a BaseInteraction object under the alias "interaction".
 	name: Events.InteractionCreate,

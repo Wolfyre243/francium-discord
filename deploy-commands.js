@@ -1,12 +1,17 @@
 //------------------------------Declare Variables------------------------------------
-const { REST, Routes} = require('discord.js');
-const { clientId, guildId, token } = require('./config.json'); //Import the properties from the config file.
-const fs = require('node:fs');
-const path = require('node:path');
+import { REST, Routes} from 'discord.js';
+import config from './config.json' with { type: "json" }; //Import the properties from the config file.
+import fs from 'node:fs';
+import path from 'node:path';
+
+const clientId = config.clientId;
+const guildId = config.guildId;
+const token = config.token;
+
+const __dirname = import.meta.dirname;
 
 //Constructing the REST module
 const rest = new REST().setToken(token);
-
 //---------------------------------Main Script----------------------------------------
 // Grab all of the command folders in the commands directory
 const commands = [];
@@ -19,8 +24,8 @@ for (const folder of commandFolders) {
     const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js')); // Filter out the .js files.
 
     for (const file of commandFiles) {
-        const filePath = path.join(commandsPath, file);
-        const command = require(filePath);
+        const filePath = `./commands/${folder}/${file}`;
+        const { command } = await import(filePath);
         if ('data' in command && 'execute' in command) {
             commands.push(command.data.toJSON()); // Grab the data property from each command to use the 
         } else {

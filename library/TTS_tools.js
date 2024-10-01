@@ -2,26 +2,52 @@
 // Only connect if the user who sent the message is in the specific vc.
 
 // Import a TON of dependencies
-const { createAudioResource, createAudioPlayer, AudioPlayerStatus, EndBehaviorType } = require('@discordjs/voice');
+// const { createAudioResource, createAudioPlayer, AudioPlayerStatus, EndBehaviorType } = require('@discordjs/voice');
 // Import encoder/decoder
-const prism = require('prism-media');
+// const prism = require('prism-media');
+// // Import ffmpeg tooling
+// const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
+// const ffmpeg = require('fluent-ffmpeg');
+// ffmpeg.setFfmpegPath(ffmpegPath);
+
+// // Import langchain pipelines
+// const { pipeline } = require('@xenova/transformers');
+
+// // Miscellaneous
+// const fs = require('fs');
+// const path = require('path');
+// const { v4 } = require('uuid');
+// const { endpoint } = require('../config.json');
+
+import {
+  createAudioResource,
+  createAudioPlayer,
+  AudioPlayerStatus,
+  EndBehaviorType
+} from '@discordjs/voice';
+
+// Import encoder/decoder
+import prism from 'prism-media';
+
 // Import ffmpeg tooling
-const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
-const ffmpeg = require('fluent-ffmpeg');
+import ffmpegPath from '@ffmpeg-installer/ffmpeg';
+import ffmpeg from 'fluent-ffmpeg';
 ffmpeg.setFfmpegPath(ffmpegPath);
 
 // Import langchain pipelines
-import { pipeline } from '@xenova/transformers'
+import { pipeline } from '@xenova/transformers';
 
 // Miscellaneous
-const fs = require('fs');
-const path = require('path');
-const { v4 } = require('uuid');
-const { endpoint } = require('../config.json');
+import fs from 'fs';
+import path from 'path';
+import { v4 } from 'uuid';
+import config from '../config.json' with { type: "json" };
+
+const endpoint = config.endpoint;
 
 // -------------------------------------- Main Script ---------------------------------------------------------
 // Initialise audio player
-const audioPlayer = createAudioPlayer();
+export const audioPlayer = createAudioPlayer();
 console.log("Audio player created!");
 
 audioPlayer.on(AudioPlayerStatus.Playing, () => {
@@ -32,7 +58,7 @@ audioPlayer.on('error', (e) => {
     console.log(`Error: ${e}`);
 });
 
-const generateAudioResource = async (message) => {
+export const generateAudioResource = async (message) => {
     // Use the francium server to generate Buffer
     try {
         const output = await fetch(`http://${endpoint}:3030/texttospeech`, {
@@ -60,14 +86,14 @@ const generateAudioResource = async (message) => {
     }   
 }
 
-const transcribeAudio = async (filepath) => {
+export const transcribeAudio = async (filepath) => {
     const transcriber = await pipeline('automatic-speech-recognition', 'Xenova/whisper-tiny.en');
     const output = await transcriber(url);
 
     return output.text;
 }
 
-const createListeningStream = async (receiver, userId) => {
+export const createListeningStream = async (receiver, userId) => {
     // Create a listening stream upon subscription to specified user.
     const listenStream = receiver.subscribe(userId, {
         end: {
@@ -121,4 +147,4 @@ const createListeningStream = async (receiver, userId) => {
     });
 }
 
-module.exports = { generateAudioResource, audioPlayer, createListeningStream, transcribeAudio };
+// module.exports = { generateAudioResource, audioPlayer, createListeningStream, transcribeAudio };

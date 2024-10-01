@@ -1,6 +1,6 @@
-const { SlashCommandBuilder } = require('discord.js');
+import { SlashCommandBuilder } from 'discord.js';
 
-module.exports = {
+export const command = {
 	category: 'utility',
 	data: new SlashCommandBuilder()
 		.setName('reload')

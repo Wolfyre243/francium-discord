@@ -1,10 +1,11 @@
-const { Events } = require('discord.js');
-const { endpoint, guildId } = require('../config.json');
-const { joinVoiceChannel, createAudioPlayer, AudioPlayerStatus, VoiceConnectionStatus } = require('@discordjs/voice');
-const { generateAudioResource, audioPlayer } = require('../library/TTS_tools');
+import { Events } from 'discord.js';
+import config from '../config.json' with { type: "json" };
+import { generateAudioResource, audioPlayer } from '../library/TTS_tools.js';
+
+const endpoint = config.endpoint;
 
 // 1242754476914249779
-module.exports = {
+export const event = {
 	name: Events.MessageCreate,
     once: false,
 	async execute(message) {
