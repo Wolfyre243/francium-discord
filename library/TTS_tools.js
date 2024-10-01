@@ -35,6 +35,9 @@ import ffmpeg from 'fluent-ffmpeg';
 import ffmpegPath from 'ffmpeg-static';
 ffmpeg.setFfmpegPath(ffmpegPath);
 
+// Import wavefile utility
+import wavefile from 'wavefile';
+
 // Import langchain pipelines
 import { pipeline } from '@xenova/transformers';
 
@@ -91,7 +94,14 @@ export const generateAudioResource = async (message) => {
 
 export const transcribeAudio = async (filepath) => {
     const transcriber = await pipeline('automatic-speech-recognition', 'Xenova/whisper-tiny.en');
-    const output = await transcriber(filepath);
+    const recording = new wavefile.WaveFile(fs.readFileSync(filepath));
+    recording.toBitDepth('32f');
+    recording.toSampleRate(16000);
+    let audioData = recording.getSamples();
+
+    if (Array.isArray(audioData)) audioData = audioData[0];
+
+    const output = await transcriber(audioData);
 
     return output.text;
 }
@@ -124,28 +134,26 @@ export const createListeningStream = async (receiver, userId) => {
         console.log("attempting to write mp3 file...");
         // const pcmObj = fs.readFileSync(path.join(__dirname, `../audio/${uid}.pcm`));
         // console.log(pcmObj)
-        setTimeout(() => {
-            ffmpeg()
-                .input(path.join(__dirname, `../audio/${uid}.pcm`))
-                .inputFormat('s32le')
-                .audioBitrate(128)
-                .audioFrequency(48000)
-                .audioChannels(2)
-                .output(path.join(__dirname, '../audio/recording.mp3'))
-                .on('end', async () => {
-                    console.log("file written!");
-                    fs.unlinkSync(path.join(__dirname, `../audio/${uid}.pcm`));
-                    console.log("deleted pcm file");
-                })
-                .on("error", (err) => {
-                    console.error("Error:", err);
-                })
-                .run();
-        }, 3000);
+        ffmpeg()
+            .input(path.join(__dirname, `../audio/${uid}.pcm`))
+            .inputFormat('s32le')
+            .audioBitrate(128)
+            .audioFrequency(48000)
+            .audioChannels(2)
+            .output(path.join(__dirname, '../audio/recording.wav'))
+            .on('end', async () => {
+                console.log("file written!");
+                fs.unlinkSync(path.join(__dirname, `../audio/${uid}.pcm`));
+                console.log("deleted pcm file");
+            })
+            .on("error", (err) => {
+                console.error("Error:", err);
+            })
+            .run();
 
         console.log('created mp3 file');
         // After generation, transcribe the audio and return the transcribed message.
-        const userMessage = await transcribeAudio(path.join(__dirname, `../audio/recording.mp3`));
+        const userMessage = await transcribeAudio(path.join(__dirname, `../audio/recording.wav`));
         console.log(`Transcribed Message: ${userMessage}`);
     });
 }
