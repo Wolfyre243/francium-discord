@@ -12,6 +12,7 @@ import {
 import config from '../config.json' with { type: "json" };
 
 const guildId = config.guildId;
+const voiceChannelId = config.voiceChannelId;
 const sudoId = config.sudoId;
 
 export const event = {
@@ -22,13 +23,13 @@ export const event = {
 	async execute(client) {
 		console.log(`Ready! Logged in as ${client.user.tag}.`);
 
-		const logChannel = client.channels.resolve(config.logChannelId);
+		// const logChannel = client.channels.resolve(config.logChannelId);
 		// When the bot is ready, join its dedicated voice channel.
 		// This might change in the future.
 		// We will be creating a SINGLE voice connection
 
 		const voiceConnection = joinVoiceChannel({
-			channelId: '1289466509864992873', // Alyssa's Den VC
+			channelId: voiceChannelId, // Alyssa's Den VC
 			guildId: guildId,
 			adapterCreator: client.guilds.resolve(guildId).voiceAdapterCreator,
 			selfDeaf: false,
