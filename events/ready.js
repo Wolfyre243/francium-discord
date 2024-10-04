@@ -22,7 +22,6 @@ export const event = {
     // The name of this function shouldn't matter
 	async execute(client) {
 		console.log(`Ready! Logged in as ${client.user.tag}.`);
-
 		// const logChannel = client.channels.resolve(config.logChannelId);
 		// When the bot is ready, join its dedicated voice channel.
 		// This might change in the future.
