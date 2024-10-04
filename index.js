@@ -22,6 +22,7 @@ const client = new Client({
 // Adds a new property called "commands" to the client instance
 // This allows us to access our commands in other files.
 client.commands = new Collection(); // The collection class is an extension of the Map class, which we will be using to store commands
+client.voiceConnects = new Map(); // The collection class is an extension of the Map class, which we will be using to store audio players.
 
 // 1. Initiate & Read Commands
 const foldersPath = path.join(__dirname, 'commands'); // Constructs a path to the commands directory. "__dirname" is an environment variable for the root dir.

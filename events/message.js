@@ -1,6 +1,6 @@
 import { Events } from 'discord.js';
 import config from '../config.json' with { type: "json" };
-import { generateAudioResource, audioPlayer, speakAudio } from '../library/TTS_tools.js';
+import { speakAudio } from '../library/TTS_tools.js';
 import { generateResponse } from '../library/ollamaTools.js';
 
 const endpoint = config.endpoint;
@@ -24,7 +24,8 @@ export const event = {
             
             // const audioResource = await generateAudioResource(responseJSON.result);
             // audioPlayer.play(audioResource);
-            speakAudio(response.result);
+            const voiceSub = message.client.voiceConnects.get(message.guildId);
+            speakAudio(response.result, voiceSub.player);
 
         } catch (error) {
             await message.reply("There was an error with my brain...");
