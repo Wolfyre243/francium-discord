@@ -24,6 +24,9 @@ import {
   createAudioPlayer,
   AudioPlayerStatus,
   EndBehaviorType,
+  joinVoiceChannel,
+  VoiceConnectionStatus,
+  entersState
 } from '@discordjs/voice';
 
 // Import encoder/decoder
@@ -49,6 +52,7 @@ import config from '../config.json' with { type: "json" };
 import { generateResponse } from './ollamaTools.js';
 
 const endpoint = config.endpoint;
+const sudoId = config.sudoId;
 const __dirname = import.meta.dirname;
 
 // A debounce to prevent queuing of audio
@@ -56,20 +60,72 @@ let canPlay = true;
 
 // -------------------------------------- Main Script ---------------------------------------------------------
 // Initialise audio player
-export const audioPlayer = createAudioPlayer();
-console.log("Audio player created!");
+export const connectVoice = async (client, channelId, guildId) => {
+    const audioPlayer = createAudioPlayer();
+    // console.log("Audio player created!");
 
-audioPlayer.on(AudioPlayerStatus.Playing, () => {
-    console.log('Playing audio!');
-});
+    audioPlayer.on(AudioPlayerStatus.Playing, () => {
+        console.log(`Playing audio in guild with ID: ${guildId}`);
+    });
 
-audioPlayer.on(AudioPlayerStatus.Idle, () => {
-    canPlay = true;
-});
+    audioPlayer.on(AudioPlayerStatus.Idle, () => {
+        canPlay = true;
+    });
 
-audioPlayer.on('error', (e) => {
-    console.log(`Error: ${e}`);
-});
+    audioPlayer.on('error', (e) => {
+        console.log(`Error: ${e}`);
+    });
+
+    const voiceConnection = joinVoiceChannel({
+        channelId: channelId, // Add a channel resolver here, to match the default vc of each server
+        guildId: guildId,
+        adapterCreator: client.guilds.resolve(guildId).voiceAdapterCreator,
+        selfDeaf: false,
+    });
+
+    voiceConnection.on(VoiceConnectionStatus.Disconnected, async (oldState, newState) => {
+        try {
+            await Promise.race([
+                entersState(connection, VoiceConnectionStatus.Signalling, 5_000),
+                entersState(connection, VoiceConnectionStatus.Connecting, 5_000),
+            ]);
+            // Seems to be reconnecting to a new channel - ignore disconnect
+        } catch (error) {
+            // Seems to be a real disconnect which SHOULDN'T be recovered from
+            connection.destroy();
+        }
+    });
+
+    // When ready, subscribe to the audio player.
+    voiceConnection.on(VoiceConnectionStatus.Ready, () => {
+        console.log("Voice Connection Established!");
+        // client.voiceManager.set(guildId, voiceConnection);
+
+        const audioSubscription = voiceConnection.subscribe(audioPlayer);
+        client.voiceConnects.set(guildId, audioSubscription);
+    });
+
+    await entersState(voiceConnection, VoiceConnectionStatus.Ready, 20e3);
+    const receiver = voiceConnection.receiver;
+
+    // Set event listeners
+    receiver.speaking.on("start", async (userId) => {
+        console.log(`User ${userId} started speaking!`);
+        // Only allow authorised user to speak to the bot.
+        if (userId !== sudoId) return;
+        // // If audio is already playing or buffering, do not invoke anything.
+        // if (audioPlayer.state == AudioPlayerStatus.Playing || audioPlayer.state == AudioPlayerStatus.Buffering) return;
+        
+        // If a subscription already exists, exit.
+        // If audioPlayer is already playing or buffering, exit.
+        if (receiver.subscriptions.size > 0) {
+            return;
+        };
+        createListeningStream(receiver, userId, client, audioPlayer);
+    });
+
+    return { voiceConnection, audioPlayer };
+}
 
 export const generateAudioResource = async (message) => {
     // Use the francium server to generate Buffer
@@ -115,12 +171,12 @@ export const transcribeAudio = async (filepath) => {
     return output.text;
 }
 
-export const speakAudio = async (message) => {
+export const speakAudio = async (message, audioPlayer) => {
     const audioResource = await generateAudioResource(message);
     audioPlayer.play(audioResource);
 }
 
-export const createListeningStream = async (receiver, userId, client) => {
+export const createListeningStream = async (receiver, userId, client, audioPlayer) => {
     const logChannel = client.channels.resolve(config.logChannelId);
 
     if (!canPlay) {
@@ -158,15 +214,15 @@ export const createListeningStream = async (receiver, userId, client) => {
         // const pcmObj = fs.readFileSync(path.join(__dirname, `../audio/${uid}.pcm`));
         // console.log(pcmObj)
         ffmpeg()
-            .input(path.join(__dirname, `../audio/${userId}_${uid}.pcm`))
+            .input(path.join(__dirname, `../audio/${uid}.pcm`))
             .inputFormat('s32le')
             .audioFrequency(60000)
             .audioChannels(2)
-            .output(path.join(__dirname, `../audio/${userId}_${uid}.wav`))
+            .output(path.join(__dirname, `../audio/${uid}.wav`))
             .on('end', async () => {
                 console.log("file written!");
-                fs.unlinkSync(path.join(__dirname, `../audio/${userId}_${uid}.pcm`));
-                fs.unlinkSync(path.join(__dirname, `../audio/${userId}_${uid}.wav`));
+                fs.unlinkSync(path.join(__dirname, `../audio/${uid}.pcm`));
+                // fs.unlinkSync(path.join(__dirname, `../audio/${userId}_${uid}.wav`));
                 console.log("deleted pcm file");
             })
             .on("error", (err) => {
@@ -182,7 +238,7 @@ export const createListeningStream = async (receiver, userId, client) => {
 
         const response = await generateResponse(userMessage);
         console.log(`Generated Response: ${response.result}`);
-        speakAudio(response.result);
+        speakAudio(response.result, audioPlayer);
 
         logChannel.send(response.result);
     });
