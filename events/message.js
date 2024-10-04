@@ -12,35 +12,25 @@ export const event = {
 	async execute(message) {
         if (message.author.bot) return;
         
-        // Gatekeep the bot for now to prevent unexpected errors
-        if (message.author.username == "wolfyre.") {
-            try {
-                await message.channel.sendTyping();
-                const response = await generateResponse(message.content);
-                
-                // Handle error status code
-                // if (response.statusCode == 500) {
-                //     console.log("Error in API request:", response.error);
-                //     message.reply("Uh oh, my brain's not working! (Psst! Error code 500!)");
-                //     return;
-                // }
+        try {
+            await message.channel.sendTyping();
+            const response = await generateResponse(`${message.author.username}: ${message.content}`);
+            message.reply(response.result);
 
-                message.reply(response.result);
-
-                if (!(message.member.voice.channelId)) {
-                    console.log("User is not in a voice channel.")
-                    return;
-                }
-                
-                // const audioResource = await generateAudioResource(responseJSON.result);
-                // audioPlayer.play(audioResource);
-                speakAudio(response.result);
-
-            } catch (error) {
-                await message.reply("There was an error with my brain...");
-                console.log(error);
+            if (!message.member.voice.channelId) {
+                console.log("User is not in a voice channel.");
+                return;
             }
-            return;
+            
+            // const audioResource = await generateAudioResource(responseJSON.result);
+            // audioPlayer.play(audioResource);
+            speakAudio(response.result);
+
+        } catch (error) {
+            await message.reply("There was an error with my brain...");
+            console.log(error);
         }
+        return;
+        
 	},
 };
