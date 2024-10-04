@@ -23,7 +23,7 @@ import {
   createAudioResource,
   createAudioPlayer,
   AudioPlayerStatus,
-  EndBehaviorType
+  EndBehaviorType,
 } from '@discordjs/voice';
 
 // Import encoder/decoder
@@ -134,7 +134,7 @@ export const createListeningStream = async (receiver, userId, client) => {
     const listenStream = receiver.subscribe(userId, {
         end: {
             behavior: EndBehaviorType.AfterSilence,
-            duration: 100,
+            duration: 2000, // Max 2s of silence before ending the stream.
         }
     });
 
@@ -158,14 +158,15 @@ export const createListeningStream = async (receiver, userId, client) => {
         // const pcmObj = fs.readFileSync(path.join(__dirname, `../audio/${uid}.pcm`));
         // console.log(pcmObj)
         ffmpeg()
-            .input(path.join(__dirname, `../audio/${uid}.pcm`))
+            .input(path.join(__dirname, `../audio/${userId}_${uid}.pcm`))
             .inputFormat('s32le')
             .audioFrequency(60000)
             .audioChannels(2)
-            .output(path.join(__dirname, `../audio/${uid}.wav`))
+            .output(path.join(__dirname, `../audio/${userId}_${uid}.wav`))
             .on('end', async () => {
                 console.log("file written!");
-                fs.unlinkSync(path.join(__dirname, `../audio/${uid}.pcm`));
+                fs.unlinkSync(path.join(__dirname, `../audio/${userId}_${uid}.pcm`));
+                fs.unlinkSync(path.join(__dirname, `../audio/${userId}_${uid}.wav`));
                 console.log("deleted pcm file");
             })
             .on("error", (err) => {
