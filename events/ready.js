@@ -21,6 +21,8 @@ export const event = {
     // The name of this function shouldn't matter
 	async execute(client) {
 		console.log(`Ready! Logged in as ${client.user.tag}.`);
+
+		const logChannel = client.channels.resolve(config.logChannelId);
 		// When the bot is ready, join its dedicated voice channel.
 		// This might change in the future.
 		// We will be creating a SINGLE voice connection
@@ -57,6 +59,7 @@ export const event = {
 		// TODO: Find a better way to decode this someday...
 		await entersState(voiceConnection, VoiceConnectionStatus.Ready, 20e3);
 		const receiver = voiceConnection.receiver;
+		
 
 		// Set event listeners
 		receiver.speaking.on("start", async (userId) => {
@@ -65,6 +68,12 @@ export const event = {
 			if (userId !== sudoId) return;
 			// // If audio is already playing or buffering, do not invoke anything.
 			// if (audioPlayer.state == AudioPlayerStatus.Playing || audioPlayer.state == AudioPlayerStatus.Buffering) return;
+			
+			// If a subscription already exists, exit.
+			// If audioPlayer is already playing or buffering, exit.
+			if (receiver.subscriptions.size > 0) {
+				return;
+			};
 			createListeningStream(receiver, userId, client);
 		});
 
