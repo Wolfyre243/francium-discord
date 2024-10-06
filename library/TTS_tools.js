@@ -236,7 +236,7 @@ export const createListeningStream = async (receiver, userId, client, audioPlaye
         const userMessage = await transcribeAudio(path.join(__dirname, `../audio/${uid}.wav`));
         console.log(`Transcribed Message: ${userMessage}`);
 
-        const response = await generateResponse(userMessage);
+        const response = await generateResponse(`${client.users.resolve(userId).username}: ${userMessage}`);
         console.log(`Generated Response: ${response.result}`);
         speakAudio(response.result, audioPlayer);
 
