@@ -2,11 +2,12 @@
 import config from '../config.json' with { type: "json" };
 const endpoint = config.endpoint;
 
-export const generateResponse = async (message) => {
-    const response = await fetch(`http://${endpoint}:3030/francium`, {
+export const generateResponse = async (message, username) => {
+    const response = await fetch(`http://${endpoint}:3030/api/francium`, {
         method: 'POST',
         body: JSON.stringify({
-            message: message
+            message: message,
+            name: username,
         }),
         headers: {
             "Content-Type": "application/json"

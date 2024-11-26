@@ -11,10 +11,11 @@ export const event = {
     once: false,
 	async execute(message) {
         if (message.author.bot) return;
+        if (message.author.username !== 'wolfyre.') return;
         
         try {
-            await message.channel.sendTyping();
-            const response = await generateResponse(`${message.author.username}: ${message.content}`);
+            await message.channel.sendTyping(); //message.author.username
+            const response = await generateResponse(message.content, message.member.displayName);
             message.reply(response.result);
 
             if (!message.member.voice.channelId) {

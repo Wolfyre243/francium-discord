@@ -132,7 +132,7 @@ export const generateAudioResource = async (message) => {
     const uid = v4();
 
     try {
-        const output = await fetch(`http://${endpoint}:3030/texttospeech`, {
+        const output = await fetch(`http://${endpoint}:3030/api/texttospeech`, {
             method: "POST",
             body: JSON.stringify({
                 message: message,
