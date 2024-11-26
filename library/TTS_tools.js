@@ -114,7 +114,7 @@ export const connectVoice = async (client, channelId, guildId) => {
         // Only allow authorised user to speak to the bot.
         if (userId !== sudoId) return;
         // // If audio is already playing or buffering, do not invoke anything.
-        // if (audioPlayer.state == AudioPlayerStatus.Playing || audioPlayer.state == AudioPlayerStatus.Buffering) return;
+        if (audioPlayer.state == AudioPlayerStatus.Playing || audioPlayer.state == AudioPlayerStatus.Buffering) return;
         
         // If a subscription already exists, exit.
         // If audioPlayer is already playing or buffering, exit.
